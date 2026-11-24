@@ -1,9 +1,10 @@
 From Verdi Require Import Verdi.
-From Coq Require Import FMapList String.
-From Verdi Require Import FMapVeryWeak StateMachineHandlerMonad.
+From Coq Require Import FMapList.
+From Coq Require PrimString.
+From Verdi Require Import FMapVeryWeak FMapPString StateMachineHandlerMonad.
 
-Definition key := string.
-Definition value := string.
+Definition key := PrimString.string.
+Definition value := PrimString.string.
 
 Inductive input : Set :=
 | Put : key -> value -> input
@@ -16,11 +17,11 @@ Inductive output : Set :=
 | Response : key -> option value -> option value -> output. (* uniform response *)
 
 Module VarDFunctor (Map : VWS
-                       with Definition E.t := string
-                       with Definition E.eq := @eq string).
+                       with Definition E.t := PrimString.string
+                       with Definition E.eq := @eq PrimString.string).
 
-Definition key_eq_dec := string_dec.
-Definition value_eq_dec := string_dec.
+Definition key_eq_dec := PStringOT.eq_dec.
+Definition value_eq_dec := PStringOT.eq_dec.
 
 Definition val_eq_dec : forall v v' : option value, {v = v'} + {v <> v'}.
   decide equality.
@@ -40,10 +41,10 @@ Proof.
 Defined.
 
 Definition data :=
-  Map.t string.
+  Map.t PrimString.string.
 
 Definition beq_key (k1 k2 : key) :=
-  if string_dec k1 k2 then true else false.
+  if key_eq_dec k1 k2 then true else false.
 
 Definition getk k : GenHandler1 data (option value) :=
   db <- get ;;
@@ -81,7 +82,7 @@ Definition runHandler (h : input -> GenHandler1 data output)
 
 Definition VarDHandler := runHandler VarDHandler'.
 
-Definition init_map := Map.empty string.
+Definition init_map := Map.empty PrimString.string.
 
 #[global]
 Instance vard_base_params : BaseParams :=
@@ -328,7 +329,9 @@ Proof.
   eauto using trace_correct'_trace_correct.
 Qed.
 
-Open Scope string_scope.
+Import PrimString.PStringNotations.
+Open Scope pstring_scope.
+
 Example trace_correct_eg0 :
   trace_correct [(Put "james" "awesome", Response "james" (Some "awesome") None)].
 Proof.
@@ -339,9 +342,7 @@ Proof.
 Qed.
 End VarDFunctor.
 
-Module LogTimeVarD := VarDFunctor(LogTimeStringMap).
-Module LinearTimeVarD := VarDFunctor(LinearTimeStringMap).
-
-Module VarD := LogTimeVarD.
+Module PStringVarD := VarDFunctor(LogTimePStringMap).
+Module VarD := PStringVarD.
 
 Export VarD.

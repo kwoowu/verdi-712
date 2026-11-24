@@ -1,8 +1,9 @@
 From Verdi Require Import Verdi.
-From Coq Require Import String.
+From Coq Require PrimString.
 From Verdi Require Import VarD PrimaryBackup.
 
-Open Scope string_scope.
+Import PrimString.PStringNotations.
+Open Scope pstring_scope.
 
 #[global]
 Instance vard_pbj_params : PrimaryBackupParams vard_base_params :=
